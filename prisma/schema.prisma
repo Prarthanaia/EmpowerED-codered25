@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  password          String
+  name              String?
+  role              Role      @default(STUDENT)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  studentProfile    StudentProfile?
+  educatorProfile   EducatorProfile?
+}
+
+model StudentProfile {
+  id               String    @id @default(cuid())
+  user             User      @relation(fields: [userId], references: [id])
+  userId           String    @unique
+  grade            String?
+  enrolledCourses  Course[]
+  quizAttempts     QuizAttempt[]
+  progressReports  ProgressReport[]
+}
+
+model EducatorProfile {
+  id               String    @id @default(cuid())
+  user             User      @relation(fields: [userId], references: [id])
+  userId           String    @unique
+  subjects         String[]
+  courses          Course[]
+}
+
+model Course {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  materials   Material[]
+  quizzes     Quiz[]
+  students    StudentProfile[]
+  educator    EducatorProfile  @relation(fields: [educatorId], references: [id])
+  educatorId  String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Material {
+  id          String    @id @default(cuid())
+  title       String
+  content     String
+  fileUrl     String?
+  type        MaterialType
+  course      Course    @relation(fields: [courseId], references: [id])
+  courseId    String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Quiz {
+  id          String    @id @default(cuid())
+  title       String
+  questions   Question[]
+  course      Course    @relation(fields: [courseId], references: [id])
+  courseId    String
+  attempts    QuizAttempt[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Question {
+  id          String    @id @default(cuid())
+  text        String
+  options     String[]
+  answer      String
+  quiz        Quiz      @relation(fields: [quizId], references: [id])
+  quizId      String
+}
+
+model QuizAttempt {
+  id          String    @id @default(cuid())
+  student     StudentProfile  @relation(fields: [studentId], references: [id])
+  studentId   String
+  quiz        Quiz      @relation(fields: [quizId], references: [id])
+  quizId      String
+  answers     Json
+  score       Float
+  createdAt   DateTime  @default(now())
+}
+
+model ProgressReport {
+  id          String    @id @default(cuid())
+  student     StudentProfile  @relation(fields: [studentId], references: [id])
+  studentId   String
+  data        Json
+  createdAt   DateTime  @default(now())
+}
+
+enum Role {
+  STUDENT
+  EDUCATOR
+  ADMIN
+}
+
+enum MaterialType {
+  DOCUMENT
+  VIDEO
+  AUDIO
+  PRESENTATION
+}
+
